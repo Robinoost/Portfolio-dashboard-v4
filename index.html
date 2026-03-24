@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f11;--bg2:#161618;--bg3:#1e1e21;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0f0f0;--text2:#888;--text3:#555;--green:#4ade80;--green-bg:rgba(74,222,128,0.08);--green-border:rgba(74,222,128,0.2);--red:#f87171;--red-bg:rgba(248,113,113,0.08);--red-border:rgba(248,113,113,0.2);--amber:#fbbf24;--amber-bg:rgba(251,191,36,0.08);--amber-border:rgba(251,191,36,0.2);--accent:#7c6af7}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);padding:24px 0;display:flex;flex-direction:column;z-index:100}
+.main{margin-left:220px;padding:28px;min-height:100vh}
+.logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.logo-title{font-size:15px;font-weight:500}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03)}
+.nav-item.active{color:var(--text);border-left-color:var(--accent);background:rgba(124,106,247,0.06)}
+.sidebar-bottom{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border)}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:22px;font-weight:500;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:6px}
+.metric-value{font-size:22px;font-weight:500;font-family:'DM Mono',monospace}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:3px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:400}
+td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+.ticker-cell{font-family:'DM Mono',monospace;font-weight:500}
+.type-badge{font-size:10px;padding:2px 5px;border-radius:3px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);margin-left:5px}
+.tag{display:inline-block;font-size:11px;padding:3px 7px;border-radius:4px;font-weight:500;font-family:'DM Mono',monospace;white-space:nowrap}
+.tag-buy{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-sell{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-watch{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.tag-hold{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.btn{font-size:13px;padding:7px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#6a59e0;border-color:#6a59e0;color:#fff}
+.btn-sm{font-size:12px;padding:5px 12px}
+.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{font-size:12px;padding:4px 11px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);transition:all .15s}
+.filter-btn.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.signal-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px}
+.signal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.signal-body{font-size:13px;color:var(--text2);line-height:1.7}
+.signal-action{font-size:12px;color:var(--text);font-weight:500;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+input[type=number],input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:6px 10px;font-family:'DM Mono',monospace;width:100%}
+input:focus{outline:none;border-color:var(--accent)}
+select{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:6px 10px;width:100%}
+.rsi-bar{height:6px;border-radius:3px;background:var(--bg3);position:relative;overflow:visible;margin-top:4px}
+.rsi-fill{height:6px;border-radius:3px;transition:width .5s}
+.indicator-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:4px;border:1px solid var(--border)}
+.opp-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px}
+.opp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;align-items:center;justify-content:center}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:28px;width:440px;max-width:92vw}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.mb12{margin-bottom:12px}.mb8{margin-bottom:8px}
+.loading-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);padding:12px 0}
+@media(max-width:768px){.sidebar{width:56px}.nav-item span:not(.nav-icon){display:none}.logo-title,.logo-sub{display:none}.main{margin-left:56px;padding:16px}.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-title">Portfolio</div>
+    <div class="logo-sub">De Giro</div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showPage('overview',this)"><span class="nav-icon">▦</span><span>Overzicht</span></div>
+    <div class="nav-item" onclick="showPage('technisch',this)"><span class="nav-icon">◎</span><span>Technisch</span></div>
+    <div class="nav-item" onclick="showPage('signals',this)"><span class="nav-icon">◈</span><span>AI-signalen</span></div>
+    <div class="nav-item" onclick="showPage('spotter',this)"><span class="nav-icon">◉</span><span>Kans-spotter</span></div>
+    <div class="nav-item" onclick="showPage('news',this)"><span class="nav-icon">◧</span><span>Nieuws</span></div>
+    <div class="nav-item" onclick="showPage('edit',this)"><span class="nav-icon">◫</span><span>Bewerken</span></div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:8px" id="api-status-txt">Geen API-sleutel</div>
+    <button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="refreshAll()" id="refresh-btn">↻ Koersen laden</button>
+    <button class="btn btn-sm" style="width:100%;font-size:11px" onclick="showModal('api-modal')">API-sleutel</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- OVERZICHT -->
+<div class="page active" id="page-overview">
+  <div class="flex-between mb12">
+    <div><div class="page-title">Portefeuille</div><div class="page-sub" style="margin-bottom:0">21 posities — <span id="koers-tijd" style="color:var(--text3)">koersen nog niet geladen</span></div></div>
+  </div>
+  <div class="grid4">
+    <div class="metric"><div class="metric-label">Totale waarde</div><div class="metric-value" id="m-total">—</div><div class="metric-sub" id="m-total-sub">—</div></div>
+    <div class="metric"><div class="metric-label">Ongerealiseerde W/V</div><div class="metric-value" id="m-pnl">—</div><div class="metric-sub" id="m-pnl-sub">—</div></div>
+    <div class="metric"><div class="metric-label">Koopsignalen</div><div class="metric-value" id="m-buy" style="color:var(--green)">—</div><div class="metric-sub">posities</div></div>
+    <div class="metric"><div class="metric-label">Let op / verkoop</div><div class="metric-value" id="m-warn" style="color:var(--amber)">—</div><div class="metric-sub">posities</div></div>
+  </div>
+  <div class="card">
+    <div class="flex-between mb12">
+      <div class="card-title" style="margin-bottom:0">Posities</div>
+      <div class="filter-bar" style="margin-bottom:0">
+        <button class="filter-btn active" onclick="filterTable('all',this)">Alles</button>
+        <button class="filter-btn" onclick="filterTable('ETF',this)">ETFs</button>
+        <button class="filter-btn" onclick="filterTable('Aandeel',this)">Aandelen</button>
+        <button class="filter-btn" onclick="filterTable('buy',this)">Kopen</button>
+        <button class="filter-btn" onclick="filterTable('alert',this)">Alert</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Ticker</th><th>Naam</th><th style="text-align:right">#</th>
+          <th style="text-align:right">GAK</th><th style="text-align:right">Koers</th>
+          <th style="text-align:right">+/-%</th><th style="text-align:right">Waarde</th>
+          <th style="text-align:right">RSI</th><th style="text-align:right">Signaal</th>
+        </tr></thead>
+        <tbody id="pos-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TECHNISCH -->
+<div class="page" id="page-technisch">
+  <div class="page-title">Technische analyse</div>
+  <div class="page-sub">RSI, Moving Average en momentum per positie</div>
+  <div class="card mb12" style="padding:14px 20px">
+    <div style="font-size:13px;color:var(--text2);line-height:1.8">
+      <span style="color:var(--text);font-weight:500">RSI &lt; 30</span> = oversold → mogelijke koopkans &nbsp;|&nbsp;
+      <span style="color:var(--text);font-weight:500">RSI &gt; 70</span> = overbought → verkoopsignaal &nbsp;|&nbsp;
+      <span style="color:var(--text);font-weight:500">Koers &gt; MA200</span> = opwaartse trend &nbsp;|&nbsp;
+      <span style="color:var(--text);font-weight:500">Koers &lt; MA50</span> = neerwaartse druk
+    </div>
+  </div>
+  <div id="tech-list"></div>
+</div>
+
+<!-- AI SIGNALEN -->
+<div class="page" id="page-signals">
+  <div class="page-title">AI-signalen</div>
+  <div class="page-sub">Claude analyseert elke positie met web search op actuele marktomstandigheden</div>
+  <div class="flex-between mb12">
+    <div style="font-size:13px;color:var(--text2)" id="sig-status">Klik analyseren om te starten.</div>
+    <button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">Analyseer alle posities</button>
+  </div>
+  <div class="grid4" style="margin-bottom:16px">
+    <div class="metric"><div class="metric-label">Geanalyseerd</div><div class="metric-value mono" id="s-done">0/21</div></div>
+    <div class="metric"><div class="metric-label">Kopen</div><div class="metric-value" id="s-buy" style="color:var(--green)">0</div></div>
+    <div class="metric"><div class="metric-label">Verkopen</div><div class="metric-value" id="s-sell" style="color:var(--red)">0</div></div>
+    <div class="metric"><div class="metric-label">Let op</div><div class="metric-value" id="s-watch" style="color:var(--amber)">0</div></div>
+  </div>
+  <div id="signals-list"></div>
+</div>
+
+<!-- KANS-SPOTTER -->
+<div class="page" id="page-spotter">
+  <div class="page-title">Kans-spotter</div>
+  <div class="page-sub">Koopopportuniteiten buiten je huidige portefeuille</div>
+  <div class="card">
+    <div class="grid3" style="margin-bottom:12px">
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:5px">Sector / thema</div>
+        <select id="spotter-sector">
+          <option value="AI en halfgeleiders Europa en VS">AI & halfgeleiders</option>
+          <option value="Europese defensie en veiligheid">Europese defensie</option>
+          <option value="clean energy en duurzaamheid">Clean energy</option>
+          <option value="cybersecurity">Cybersecurity</option>
+          <option value="quantum computing">Quantum computing</option>
+          <option value="ondergewaardeerde Europese aandelen waarde">Europese waarde-aandelen</option>
+          <option value="grondstoffen en commodities goud zilver">Grondstoffen</option>
+          <option value="gezondheidszorg en biotech">Biotech & healthcare</option>
+          <option value="cloud computing SaaS">Cloud & SaaS</option>
+          <option value="emerging markets China India">Emerging markets</option>
+          <option value="financiele sector banken">Financiële sector</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:5px">Type</div>
+        <select id="spotter-focus">
+          <option value="UCITS ETFs beschikbaar op Euronext Amsterdam of Xetra voor Belgische belegger">ETFs (UCITS)</option>
+          <option value="individuele aandelen">Individuele aandelen</option>
+          <option value="ETFs en aandelen">Beide</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:5px">Risicoprofiel</div>
+        <select id="spotter-risk">
+          <option value="gematigd risico">Gematigd</option>
+          <option value="laag risico defensief">Defensief</option>
+          <option value="hoog risico groei">Groeigericht</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="spotter-btn" onclick="runSpotter()">Zoek koopkansen</button>
+  </div>
+  <div id="spotter-results"></div>
+</div>
+
+<!-- NIEUWS -->
+<div class="page" id="page-news">
+  <div class="page-title">Nieuws & sentiment</div>
+  <div class="page-sub">Actueel nieuws voor jouw posities via AI met web search</div>
+  <div class="flex-between mb12">
+    <div style="font-size:13px;color:var(--text2)" id="news-status">Klik ophalen voor actueel nieuws.</div>
+    <button class="btn btn-primary" id="news-btn" onclick="fetchNews()">Nieuws ophalen</button>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Marktindicatoren</div>
+        <div id="macro-list"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Nieuws per positie</div>
+        <div id="news-list"><div style="font-size:13px;color:var(--text3);padding:8px 0">Nog niet geladen.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BEWERKEN -->
+<div class="page" id="page-edit">
+  <div class="page-title">Posities bewerken</div>
+  <div class="page-sub">Pas GAK of huidige koers aan. Koersen worden overschreven bij de volgende refresh.</div>
+  <div class="card">
+    <div style="display:grid;grid-template-columns:58px 1fr 105px 105px 32px;gap:8px;padding:6px 0;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);margin-bottom:4px">
+      <span>Ticker</span><span>Naam</span><span>GAK (€/$)</span><span>Koers (€/$)</span><span></span>
+    </div>
+    <div id="edit-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Positie toevoegen</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:end">
+      <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px">Ticker</div><input type="text" id="add-ticker" placeholder="NVDA"></div>
+      <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px">Naam</div><input type="text" id="add-name" placeholder="Nvidia Corp"></div>
+      <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px">GAK (€/$)</div><input type="number" id="add-buy" placeholder="0.00"></div>
+      <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px">Type</div><select id="add-type"><option>Aandeel</option><option>ETF</option></select></div>
+      <button class="btn btn-primary" onclick="addPosition()">+ Voeg toe</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- API Modal -->
+<div class="modal-overlay" id="api-modal" onclick="if(event.target===this)closeModal('api-modal')">
+  <div class="modal-box">
+    <div style="font-size:16px;font-weight:500;margin-bottom:6px">Anthropic API-sleutel</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">Sleutel wordt opgeslagen in je eigen browser — nooit in de code. Haal op via <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>.</div>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." style="margin-bottom:10px">
+    <div style="font-size:11px;color:var(--text3);background:var(--bg3);padding:10px;border-radius:6px;margin-bottom:14px;line-height:1.7">
+      Kosten per volledige analyse: ~€0.02–0.05<br>
+      Kosten per kans-spotter: ~€0.01–0.02<br>
+      Live koersen: gratis via Yahoo Finance proxy
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveApiKey()" style="flex:1">Opslaan</button>
+      <button class="btn" onclick="clearApiKey()" style="flex:1">Verwijderen</button>
+      <button class="btn" onclick="closeModal('api-modal')">Annuleren</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const INIT_POSITIONS = [
+  {ticker:'BABA',name:'Alibaba Group ADR',type:'Aandeel',qty:3,buyPrice:162.64,currentPrice:126.06,currency:'USD'},
+  {ticker:'AMZN',name:'Amazon.com Inc',type:'Aandeel',qty:3,buyPrice:93.78,currentPrice:210.13,currency:'USD'},
+  {ticker:'AAPL',name:'Apple Inc',type:'Aandeel',qty:2,buyPrice:136.25,currentPrice:251.46,currency:'USD'},
+  {ticker:'MT',name:'ArcelorMittal SA',type:'Aandeel',qty:11,buyPrice:24.52,currentPrice:44.21,currency:'EUR'},
+  {ticker:'ASML',name:'ASML Holding NV',type:'Aandeel',qty:1,buyPrice:667.40,currentPrice:1175.40,currency:'EUR'},
+  {ticker:'SCHW',name:'Charles Schwab Corp',type:'Aandeel',qty:3,buyPrice:59.31,currentPrice:95.31,currency:'USD'},
+  {ticker:'HIMS',name:'Hims & Hers Health',type:'Aandeel',qty:50,buyPrice:24.78,currentPrice:22.46,currency:'USD'},
+  {ticker:'KIN',name:'Kinepolis Group NV',type:'Aandeel',qty:6,buyPrice:48.60,currentPrice:24.90,currency:'EUR'},
+  {ticker:'MC',name:'LVMH Moet Hennessy',type:'Aandeel',qty:1,buyPrice:674.20,currentPrice:466.60,currency:'EUR'},
+  {ticker:'META',name:'Meta Platforms',type:'Aandeel',qty:1,buyPrice:214.75,currentPrice:603.94,currency:'USD'},
+  {ticker:'MSFT',name:'Microsoft Corp',type:'Aandeel',qty:2,buyPrice:232.61,currentPrice:382.98,currency:'USD'},
+  {ticker:'NOVC',name:'Novo Nordisk A/S',type:'Aandeel',qty:46,buyPrice:42.63,currentPrice:31.69,currency:'EUR'},
+  {ticker:'DIS',name:'Walt Disney Co',type:'Aandeel',qty:3,buyPrice:157.66,currentPrice:97.97,currency:'USD'},
+  {ticker:'V9N',name:'Global X DataCntr REIT',type:'ETF',qty:100,buyPrice:17.60,currentPrice:18.62,currency:'EUR'},
+  {ticker:'USPY',name:'L&G Cyber Security ETF',type:'ETF',qty:25,buyPrice:27.77,currentPrice:26.52,currency:'EUR'},
+  {ticker:'DFEN',name:'VanEck Defense ETF',type:'ETF',qty:40,buyPrice:54.76,currentPrice:60.29,currency:'EUR'},
+  {ticker:'QNTM',name:'VanEck Quantum Computing',type:'ETF',qty:50,buyPrice:22.15,currentPrice:20.03,currency:'EUR'},
+  {ticker:'VWRL',name:'Vanguard FTSE All-World',type:'ETF',qty:86,buyPrice:125.33,currentPrice:139.64,currency:'EUR'},
+  {ticker:'VUSA',name:'Vanguard S&P 500',type:'ETF',qty:116,buyPrice:97.60,currentPrice:107.62,currency:'EUR'},
+  {ticker:'WTEJ',name:'WisdomTree Cloud Computing',type:'ETF',qty:40,buyPrice:29.69,currentPrice:24.29,currency:'EUR'},
+  {ticker:'VZLC',name:'WisdomTree Physical Silver',type:'ETF',qty:25,buyPrice:64.28,currentPrice:54.30,currency:'EUR'},
+];
+
+let positions = JSON.parse(localStorage.getItem('port_v3')||'null') || INIT_POSITIONS.map(p=>({...p}));
+let techData = {};
+let aiResults = {};
+let analyzedCount = 0;
+let currentFilter = 'all';
+let usdEur = 0.92;
+
+function save(){try{localStorage.setItem('port_v3',JSON.stringify(positions))}catch(e){}}
+
+async function fetchUsdEur(){
+  try {
+    const raw = await fetchWithProxy('https://query1.finance.yahoo.com/v8/finance/chart/EURUSD=X?interval=1d&range=5d');
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    const rate = parsed?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    if(rate && rate > 0.5 && rate < 2) usdEur = Math.round((1/rate)*10000)/10000;
+  } catch(e){}
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+// currentPrice is ALWAYS stored in the position original currency (USD or EUR)
+// toEur converts to EUR for portfolio value calculations
+function toEur(p){ return p.currency==='USD' ? p.currentPrice * usdEur : p.currentPrice; }
+function buyEur(p){ return p.currency==='USD' ? p.buyPrice * usdEur : p.buyPrice; }
+function pct(p){ return p.buyPrice ? ((p.currentPrice - p.buyPrice) / p.buyPrice * 100) : 0; }
+function posVal(p){ return (p.qty||1) * toEur(p); }
+function posCost(p){ return (p.qty||1) * buyEur(p); }
+
+const tagMap={buy:'tag-buy',sell:'tag-sell',watch:'tag-watch',hold:'tag-hold'};
+const lblMap={buy:'KOPEN',sell:'VERKOPEN',watch:'LET OP',hold:'NEUTRAAL'};
+
+function simpleSig(p){
+  const td = techData[p.ticker];
+  if(td){
+    if(td.rsi < 30) return 'buy';
+    if(td.rsi > 70) return 'sell';
+    if(td.rsi > 60 && pct(p) > 20) return 'watch';
+    if(pct(p) < -10) return 'buy';
+  } else {
+    const pc = pct(p);
+    if(pc < -10) return 'buy';
+    if(pc > 25) return 'sell';
+    if(pc > 15) return 'watch';
+  }
+  return 'hold';
+}
+
+function rsiColor(rsi){
+  if(rsi < 30) return 'var(--green)';
+  if(rsi > 70) return 'var(--red)';
+  if(rsi > 60) return 'var(--amber)';
+  return 'var(--text2)';
+}
+
+// ── LIVE KOERSEN ──────────────────────────────────────────────────────
+const TICKER_MAP = {
+  'BABA':'BABA','AMZN':'AMZN','AAPL':'AAPL','MT':'MT.AS','ASML':'ASML.AS',
+  'SCHW':'SCHW','HIMS':'HIMS','KIN':'KIN.BR','MC':'MC.PA','META':'META',
+  'MSFT':'MSFT','NOVC':'NOVO-B.CO','DIS':'DIS',
+  'V9N':'V9N.DE','USPY':'USPY.AS','DFEN':'DFEN.DE','QNTM':'QNTM.DE',
+  'VWRL':'VWRL.AS','VUSA':'VUSA.AS','WTEJ':'WTEJ.DE','VZLC':'VZLC.DE'
+};
+
+// Tickers waarvan Yahoo Finance koers teruggeeft in andere valuta dan EUR
+// DKK -> EUR: deel door ~7.46
+const CURRENCY_DIVIDER = {
+  'NOVC': 7.46
+};
+
+const PROXIES = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+];
+
+async function fetchWithProxy(url) {
+  for (const proxy of PROXIES) {
+    try {
+      const r = await fetch(proxy(url), {signal: AbortSignal.timeout(8000)});
+      if (!r.ok) continue;
+      const text = await r.text();
+      // allorigins wraps in {contents:...}, others return raw
+      try {
+        const j = JSON.parse(text);
+        return j.contents ? j.contents : text;
+      } catch(e) { return text; }
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+async function fetchQuote(ticker, currency){
+  const sym = TICKER_MAP[ticker] || (currency==='EUR' ? ticker+'.AS' : ticker);
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`;
+    const raw = await fetchWithProxy(url);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const meta = parsed?.chart?.result?.[0]?.meta;
+    const closes = parsed?.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.filter(v=>v!=null) || [];
+    if(!meta || !closes.length) return null;
+    return { price: meta.regularMarketPrice || closes[closes.length-1], closes };
+  } catch(e){ return null; }
+}
+
+function calcRSI(closes, period=14){
+  if(closes.length < period+1) return 50;
+  let gains=0, losses=0;
+  for(let i=closes.length-period; i<closes.length; i++){
+    const diff = closes[i] - closes[i-1];
+    if(diff>0) gains+=diff; else losses+=Math.abs(diff);
+  }
+  const avgGain = gains/period, avgLoss = losses/period;
+  if(avgLoss===0) return 100;
+  const rs = avgGain/avgLoss;
+  return Math.round(100 - (100/(1+rs)));
+}
+
+function calcMA(closes, period){
+  if(closes.length < period) return null;
+  const slice = closes.slice(-period);
+  return slice.reduce((a,b)=>a+b,0)/period;
+}
+
+async function refreshAll(){
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true; btn.textContent = '↻ Laden...';
+  document.getElementById('koers-tijd').textContent = 'koersen laden...';
+
+  // Haal eerst live wisselkoers op
+  await fetchUsdEur();
+  document.getElementById('koers-tijd').textContent = `wisselkoers: 1 USD = €${usdEur} — posities laden...`;
+
+  let loaded = 0;
+  for(const p of positions){
+    const data = await fetchQuote(p.ticker, p.currency);
+    if(data && data.price){
+      // Yahoo geeft EUR koers terug voor .AS/.DE/.PA/.BR/.CO tickers
+      // Sla altijd op in de originele valuta van het aandeel
+      let price = data.price;
+      // Corrigeer voor tickers die Yahoo in andere valuta teruggeeft (bv. DKK)
+      if(CURRENCY_DIVIDER[p.ticker]) price = price / CURRENCY_DIVIDER[p.ticker];
+      p.currentPrice = Math.round(price * 100) / 100;
+      // currentPrice blijft altijd in p.currency
+      const closes = data.closes;
+      const rsi = calcRSI(closes);
+      const ma50 = calcMA(closes, 50);
+      const ma200 = calcMA(closes, 200);
+      techData[p.ticker] = {
+        rsi,
+        ma50: ma50 ? Math.round(ma50*100)/100 : null,
+        ma200: ma200 ? Math.round(ma200*100)/100 : null,
+        aboveMA50: ma50 ? p.currentPrice > ma50 : null,
+        aboveMA200: ma200 ? p.currentPrice > ma200 : null,
+        closes
+      };
+      loaded++;
+    }
+    await new Promise(r=>setTimeout(r,200));
+  }
+
+  save();
+  const now = new Date().toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('koers-tijd').textContent = `${loaded}/${positions.length} geladen om ${now}`;
+  btn.disabled = false; btn.textContent = '↻ Koersen laden';
+  renderTable(); renderTech(); updateMetrics();
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────────
+function filterTable(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable(){
+  let list = positions;
+  if(currentFilter==='ETF') list=positions.filter(p=>p.type==='ETF');
+  else if(currentFilter==='Aandeel') list=positions.filter(p=>p.type==='Aandeel');
+  else if(currentFilter==='buy') list=positions.filter(p=>simpleSig(p)==='buy');
+  else if(currentFilter==='alert') list=positions.filter(p=>['sell','watch'].includes(simpleSig(p)));
+
+  const tbody = document.getElementById('pos-table');
+  tbody.innerHTML = list.map(p=>{
+    const sig = aiResults[p.ticker]?.signal || simpleSig(p);
+    const pc = pct(p);
+    const val = posVal(p);
+    const curr = p.currency==='USD'?'$':'€';
+    const td = techData[p.ticker];
+    const rsiVal = td ? td.rsi : '—';
+    const rsiClr = td ? rsiColor(td.rsi) : 'var(--text3)';
+    return `<tr>
+      <td><span class="ticker-cell">${p.ticker}</span><span class="type-badge">${p.type}</span></td>
+      <td style="color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</td>
+      <td style="text-align:right;color:var(--text3)">${p.qty||1}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--text2);font-size:12px">${curr}${p.buyPrice.toFixed(2)}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace">${curr}${p.currentPrice.toFixed(2)}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace" class="${pc>=0?'pos':'neg'}">${pc>=0?'+':''}${pc.toFixed(1)}%</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace">€${Math.round(val).toLocaleString('nl-BE')}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;color:${rsiClr}">${rsiVal}</td>
+      <td style="text-align:right"><span class="tag ${tagMap[sig]}">${aiResults[p.ticker]?'AI ':''} ${lblMap[sig]}</span></td>
+    </tr>`;
+  }).join('');
+
+  updateMetrics();
+}
+
+function updateMetrics(){
+  const total = positions.reduce((s,p)=>s+posVal(p),0);
+  const cost = positions.reduce((s,p)=>s+posCost(p),0);
+  const pnl = total - cost;
+  const pnlPct = cost ? (pnl/cost*100) : 0;
+  document.getElementById('m-total').textContent = '€'+Math.round(total).toLocaleString('nl-BE');
+  document.getElementById('m-total-sub').textContent = positions.length+' posities';
+  document.getElementById('m-pnl').textContent = (pnl>=0?'+':'')+'€'+Math.round(Math.abs(pnl)).toLocaleString('nl-BE');
+  document.getElementById('m-pnl').style.color = pnl>=0?'var(--green)':'var(--red)';
+  document.getElementById('m-pnl-sub').textContent = (pnlPct>=0?'+':'')+pnlPct.toFixed(1)+'%';
+  const buys = positions.filter(p=>simpleSig(p)==='buy').length;
+  const warns = positions.filter(p=>['sell','watch'].includes(simpleSig(p))).length;
+  document.getElementById('m-buy').textContent = buys;
+  document.getElementById('m-warn').textContent = warns;
+}
+
+// ── TECHNISCH ────────────────────────────────────────────────────────
+function renderTech(){
+  const el = document.getElementById('tech-list');
+  if(!Object.keys(techData).length){
+    el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:16px">Laad eerst koersen via de knop linksonder.</div>';
+    return;
+  }
+  el.innerHTML = positions.map(p=>{
+    const td = techData[p.ticker];
+    if(!td) return '';
+    const rsi = td.rsi;
+    const rsiPct = Math.min(100,rsi);
+    const rsiClr = rsi<30?'var(--green)':rsi>70?'var(--red)':rsi>60?'var(--amber)':'var(--accent)';
+    const ma50txt = td.ma50 ? `MA50: ${td.aboveMA50?'▲':'▼'} ${p.currency==='USD'?'$':'€'}${td.ma50.toFixed(2)}` : 'MA50: —';
+    const ma200txt = td.ma200 ? `MA200: ${td.aboveMA200?'▲':'▼'} ${p.currency==='USD'?'$':'€'}${td.ma200.toFixed(2)}` : 'MA200: —';
+    const trend = td.aboveMA200===true ? 'Opwaarts' : td.aboveMA200===false ? 'Neerwaarts' : '—';
+    const trendClr = td.aboveMA200===true?'var(--green)':td.aboveMA200===false?'var(--red)':'var(--text3)';
+    const sig = simpleSig(p);
+    return `<div class="card" style="padding:14px 18px;margin-bottom:10px">
+      <div class="flex-between mb8">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="ticker-cell" style="font-size:15px">${p.ticker}</span>
+          <span style="font-size:12px;color:var(--text2)">${p.name}</span>
+        </div>
+        <span class="tag ${tagMap[sig]}">${lblMap[sig]}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">RSI (14)</div>
+          <div style="font-size:18px;font-weight:500;font-family:'DM Mono',monospace;color:${rsiClr}">${rsi}</div>
+          <div class="rsi-bar"><div class="rsi-fill" style="width:${rsiPct}%;background:${rsiClr}"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">${rsi<30?'Oversold':rsi>70?'Overbought':rsi>60?'Hoog':'Neutraal'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">50-daags gem.</div>
+          <div style="font-size:13px;font-family:'DM Mono',monospace;color:${td.aboveMA50?'var(--green)':'var(--red)'}">${ma50txt}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">${td.aboveMA50===true?'Koers boven MA50':td.aboveMA50===false?'Koers onder MA50':'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">200-daags gem.</div>
+          <div style="font-size:13px;font-family:'DM Mono',monospace;color:${td.aboveMA200?'var(--green)':'var(--red)'}">${ma200txt}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">${td.aboveMA200===true?'Koers boven MA200':td.aboveMA200===false?'Koers onder MA200':'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Trend</div>
+          <div style="font-size:14px;font-weight:500;color:${trendClr}">${trend}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">${(pct(p)>=0?'+':'')+pct(p).toFixed(1)}% v/a aankoop</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── AI SIGNALEN ───────────────────────────────────────────────────────
+function addSignalCard(p){
+  document.getElementById('signals-list').insertAdjacentHTML('beforeend',
+    `<div class="signal-card" id="sig-${p.ticker}">
+      <div class="signal-header">
+        <div><span class="ticker-cell">${p.ticker}</span><span style="font-size:12px;color:var(--text2);margin-left:8px">${p.name}</span></div>
+        <span style="font-size:12px;color:var(--text2)"><span class="spinner"></span>Analyseren...</span>
+      </div>
+    </div>`);
+}
+
+function updateSignalCard(p,r){
+  const el = document.getElementById('sig-'+p.ticker);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="signal-header">
+      <div><span class="ticker-cell">${p.ticker}</span><span class="type-badge" style="margin-left:6px">${p.type}</span></div>
+      <span class="tag ${tagMap[r.signal]}">${lblMap[r.signal]}</span>
+    </div>
+    <div class="signal-body">${r.reasoning}</div>
+    ${r.action?`<div class="signal-action">→ ${r.action}</div>`:''}`;
+}
+
+async function analyzeOne(p){
+  addSignalCard(p);
+  const td = techData[p.ticker];
+  const rsiInfo = td ? `RSI: ${td.rsi}, MA50: ${td.aboveMA50?'boven':'onder'}, MA200: ${td.aboveMA200?'boven':'onder'}` : 'technische data niet beschikbaar';
+  const prompt = `Je bent een beknopte beleggingsanalist voor een Belgische particuliere belegger (De Giro, ~€50k, passief/actief mix).
+
+Positie: ${p.ticker} — ${p.name} (${p.type})
+GAK: ${p.currency==='USD'?'$':'€'}${p.buyPrice} | Koers: ${p.currency==='USD'?'$':'€'}${p.currentPrice} | P/L: ${pct(p)>=0?'+':''}${pct(p).toFixed(1)}%
+Technisch: ${rsiInfo}
+
+Zoek naar actueel nieuws en analyseer:
+1. Wat speelt er nu rond dit aandeel/ETF (nieuws, macro, sector)
+2. Technische positie (overbought/oversold, trend)
+3. Koop-, houd- of verkoopadvies met onderbouwing
+
+Antwoord UITSLUITEND in geldig JSON zonder markdown:
+{"signal":"buy"|"sell"|"watch"|"hold","reasoning":"2-3 zinnen analyse in het Nederlands","action":"één concrete actie"}`;
+
+  try{
+    const data = await callApi(prompt, 400);
+    const text = (data.content.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
+    const json = JSON.parse(text);
+    aiResults[p.ticker] = {signal:json.signal||'hold', reasoning:json.reasoning||'', action:json.action||''};
+  } catch(e){
+    aiResults[p.ticker] = {signal:simpleSig(p), reasoning:`Koers staat ${pct(p)>=0?'+':''}${pct(p).toFixed(1)}% t.o.v. GAK van €${p.buyPrice}.`, action:'Controleer manueel.'};
+  }
+  analyzedCount++;
+  updateSignalCard(p, aiResults[p.ticker]);
+  const vals = Object.values(aiResults);
+  document.getElementById('s-done').textContent = analyzedCount+'/'+positions.length;
+  document.getElementById('s-buy').textContent = vals.filter(v=>v.signal==='buy').length;
+  document.getElementById('s-sell').textContent = vals.filter(v=>v.signal==='sell').length;
+  document.getElementById('s-watch').textContent = vals.filter(v=>v.signal==='watch').length;
+  renderTable();
+}
+
+async function runAnalysis(){
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled=true; btn.textContent='Bezig...';
+  analyzedCount=0; aiResults={};
+  document.getElementById('signals-list').innerHTML='';
+  document.getElementById('sig-status').textContent='AI analyseert met web search...';
+  for(const p of positions){ await analyzeOne(p); await new Promise(r=>setTimeout(r,350)); }
+  btn.disabled=false; btn.textContent='Heranalyse';
+  document.getElementById('sig-status').textContent='Voltooid om '+new Date().toLocaleTimeString('nl-BE');
+}
+
+// ── KANS-SPOTTER ──────────────────────────────────────────────────────
+async function runSpotter(){
+  const sector = document.getElementById('spotter-sector').value;
+  const focus = document.getElementById('spotter-focus').value;
+  const risk = document.getElementById('spotter-risk').value;
+  const btn = document.getElementById('spotter-btn');
+  btn.disabled=true; btn.textContent='Zoeken...';
+  const el = document.getElementById('spotter-results');
+  el.innerHTML=`<div class="card"><span class="spinner"></span> AI zoekt koopkansen in "${sector}"...</div>`;
+
+  const bestaand = positions.map(p=>p.ticker).join(', ');
+  const prompt = `Je bent een beleggingsanalist. Zoek de beste koopkansen voor een Belgische particuliere belegger (De Giro, ~€50k, passief/actief mix, ${risk}).
+
+Sector/thema: ${sector}
+Type: ${focus}
+Bestaande posities (niet herhalen): ${bestaand}
+
+Gebruik web search voor actuele marktinformatie. Geef 4 concrete koopkansen die nu interessant zijn.
+
+Antwoord UITSLUITEND in geldig JSON:
+{"opportunities":[{"ticker":"...","name":"...","type":"ETF of Aandeel","exchange":"beurs waar beschikbaar voor Belgische belegger","thesis":"2 zinnen waarom dit nu een kans is op basis van actuele marktomstandigheden","risk":"1 zin voornaamste risico","catalyst":"concrete recente trigger of nieuws","entry":"indicatieve instapzone of koersdoel"}]}`;
+
+  try{
+    const data = await callApi(prompt, 900);
+    const text = (data.content.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
+    const json = JSON.parse(text);
+    const opps = json.opportunities||[];
+    el.innerHTML = `<div style="font-size:13px;color:var(--text2);margin-bottom:12px"><strong style="color:var(--text)">${opps.length} kansen</strong> gevonden in ${sector}</div>` +
+      opps.map(o=>`
+        <div class="opp-card">
+          <div class="opp-header">
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500">${o.ticker}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px">${o.name} &nbsp;<span style="color:var(--text3)">${o.exchange||''}</span></div>
+            </div>
+            <span class="tag tag-buy">KOPEN</span>
+          </div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px">${o.thesis}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--amber)">⚠ ${o.risk}</span>
+          </div>
+          <div style="font-size:11px;color:var(--green);margin-top:4px">▲ ${o.catalyst}</div>
+          ${o.entry?`<div style="font-size:11px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace">Instap: ${o.entry}</div>`:''}
+        </div>`).join('');
+  } catch(e){
+    el.innerHTML=`<div class="card" style="color:var(--red)">Analyse mislukt. Controleer API-sleutel of internetverbinding.</div>`;
+  }
+  btn.disabled=false; btn.textContent='Zoek koopkansen';
+}
+
+// ── NIEUWS ────────────────────────────────────────────────────────────
+function renderMacro(){
+  const items=[
+    {label:'ECB rente',val:'Stabiel',tag:'watch',note:'Verlaging verwacht Q3 2025'},
+    {label:'S&P 500 trend',val:'Opwaarts',tag:'buy',note:'Boven 200-daags gemiddelde'},
+    {label:'Inflatie EU',val:'Afkoelend',tag:'hold',note:'2.4% — richting 2% doel ECB'},
+    {label:'Handelsspanningen',val:'Verhoogd',tag:'watch',note:'VS-China tarieven in focus'},
+    {label:'Defensie-uitgaven EU',val:'Stijgend',tag:'buy',note:'Structurele groei — DFEN profiteert'},
+    {label:'EUR/USD',val:'~1.08',tag:'hold',note:'Stabiel, beperkte impact'},
+  ];
+  document.getElementById('macro-list').innerHTML=items.map(i=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:13px">${i.label}</div><div style="font-size:11px;color:var(--text3)">${i.note}</div></div>
+      <span class="tag ${tagMap[i.tag]}">${i.val}</span>
+    </div>`).join('');
+}
+
+async function fetchNews(){
+  const btn=document.getElementById('news-btn');
+  btn.disabled=true; btn.textContent='Ophalen...';
+  document.getElementById('news-status').textContent='AI zoekt actueel nieuws...';
+  const tickers=positions.map(p=>p.ticker).join(', ');
+  const prompt=`Zoek het meest recente en relevante beleggingsnieuws voor een belegger met volgende posities: ${tickers}.
+
+Geef de 6 meest impactvolle nieuwsitems van de afgelopen week.
+
+Antwoord UITSLUITEND in geldig JSON:
+{"news":[{"title":"nieuwstitel","tickers":"betrokken tickers komma-gescheiden","sentiment":"pos|neg|neu","impact":"1 zin concrete impact op de positie","date":"wanneer ongeveer"}]}`;
+  try{
+    const data=await callApi(prompt,700);
+    const text=(data.content.find(b=>b.type==='text')?.text||'').replace(/```json|```/g,'').trim();
+    const json=JSON.parse(text);
+    document.getElementById('news-list').innerHTML=json.news.map(n=>`
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
+          <div style="font-size:13px;line-height:1.5">${n.title}</div>
+          <span class="tag ${n.sentiment==='pos'?'tag-buy':n.sentiment==='neg'?'tag-sell':'tag-hold'}" style="white-space:nowrap;align-self:flex-start">${n.tickers}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">${n.impact}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${n.date||''}</div>
+      </div>`).join('');
+    document.getElementById('news-status').textContent='Bijgewerkt om '+new Date().toLocaleTimeString('nl-BE');
+  } catch(e){
+    document.getElementById('news-list').innerHTML=`<span style="color:var(--red);font-size:13px">Ophalen mislukt. Controleer API-sleutel.</span>`;
+    document.getElementById('news-status').textContent='Mislukt';
+  }
+  btn.disabled=false; btn.textContent='Nieuws ophalen';
+}
+
+// ── EDIT ──────────────────────────────────────────────────────────────
+function renderEdit(){
+  document.getElementById('edit-list').innerHTML=positions.map((p,i)=>`
+    <div style="display:grid;grid-template-columns:58px 1fr 105px 105px 32px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span class="ticker-cell">${p.ticker}</span>
+      <span style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+      <input type="number" value="${p.buyPrice}" oninput="positions[${i}].buyPrice=parseFloat(this.value)||0;save();renderTable();">
+      <input type="number" value="${p.currentPrice}" oninput="positions[${i}].currentPrice=parseFloat(this.value)||0;save();renderTable();">
+      <button onclick="removePos(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px">✕</button>
+    </div>`).join('');
+}
+
+function removePos(i){ if(confirm('Verwijder '+positions[i].ticker+'?')){ positions.splice(i,1); save(); renderTable(); renderEdit(); } }
+
+function addPosition(){
+  const t=document.getElementById('add-ticker').value.trim().toUpperCase();
+  const n=document.getElementById('add-name').value.trim();
+  const b=parseFloat(document.getElementById('add-buy').value)||0;
+  const tp=document.getElementById('add-type').value;
+  if(!t) return;
+  positions.push({ticker:t,name:n||t,type:tp,qty:1,buyPrice:b,currentPrice:b,currency:'EUR'});
+  save(); renderTable(); renderEdit();
+  ['add-ticker','add-name','add-buy'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── API KEY ───────────────────────────────────────────────────────────
+function getApiKey(){ return localStorage.getItem('anthropic_key')||''; }
+function showModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function saveApiKey(){
+  const v=document.getElementById('api-key-input').value.trim();
+  if(v && !v.startsWith('•')) localStorage.setItem('anthropic_key',v);
+  closeModal('api-modal'); updateApiStatus();
+}
+function clearApiKey(){ localStorage.removeItem('anthropic_key'); document.getElementById('api-key-input').value=''; closeModal('api-modal'); updateApiStatus(); }
+function updateApiStatus(){
+  const el=document.getElementById('api-status-txt');
+  el.innerHTML=getApiKey()?'<span style="color:var(--green)">✓</span> API actief':'<span style="color:var(--amber)">!</span> Geen API-sleutel';
+}
+
+async function callApi(prompt, maxTokens){
+  const key=getApiKey();
+  if(!key){ showModal('api-modal'); throw new Error('Geen API-sleutel.'); }
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens||600,tools:[{type:'web_search_20250305',name:'web_search'}],messages:[{role:'user',content:prompt}]})
+  });
+  return await r.json();
+}
+
+// ── NAVIGATIE ─────────────────────────────────────────────────────────
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  if(name==='edit') renderEdit();
+  if(name==='technisch') renderTech();
+  if(name==='news') renderMacro();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+updateApiStatus();
+renderTable();
+renderMacro();
+renderTech();
+</script>
+</body>
+</html>
